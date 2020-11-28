@@ -1,28 +1,43 @@
 package br.furb.kmeans;
 
+import java.io.File;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.Scanner;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 public class KMeans {
 
-	public static void main(String[] args) {
+	public static void main(String[] args) throws Exception {
 		
 		// Carregar as amostras ou objetos.
-		List<Sample> samples = loadData();
+		//List<Sample> samples = loadData();
+		
+//		String filename = "D:\\git\\furb\\aprendizado-nao-supervisionado\\dataset\\DataHotDogs.csv";
+//		boolean hasHeader = true; 
+//		int labelColumnIndex = 0;
+//		String separator = ",";
+		
+		String filename = "D:\\git\\furb\\aprendizado-nao-supervisionado\\dataset\\iris.data";
+		boolean hasHeader = false; 
+		int labelColumnIndex = 4;
+		String separator = ",";
+		
+		List<Sample> samples = loadData(filename, hasHeader, labelColumnIndex, separator);
 		//samples.forEach(System.out::println);
 		
 		
-		int k = 3; // C1, C2, C3
+		int k = 2; // C1, C2, C3
 		// Lista para os k centroids
 		List<Sample> centroids = new ArrayList<>();
 		
-		centroids.add(samples.get(0).buildClone().setLabel(Integer.toString(centroids.size() + 1)));
-		centroids.add(samples.get(2).buildClone().setLabel(Integer.toString(centroids.size() + 1)));
+		//centroids.add(samples.get(0).buildClone().setLabel(Integer.toString(centroids.size() + 1)));
+		//centroids.add(samples.get(2).buildClone().setLabel(Integer.toString(centroids.size() + 1)));
 		
 		// Calcula o k-means efetivamente
 		kmeans(samples, k, centroids);
@@ -30,7 +45,39 @@ public class KMeans {
 		// Que cada amostra esteja associada a um label (classe) de um centroide.
 		
 		samples.forEach(System.out::println);
+		System.out.println("----------------");
 		centroids.forEach(System.out::println);
+		
+		//1=Iris-setosa:10
+		//1=Iris-versicolor:5
+		//1=Iris-virginica:3
+		
+		//2=Iris-setosa:0
+		//2=Iris-versicolor:10
+		//2=Iris-virginica:0
+		Map<String, Map<String, Integer>> statistics = new HashMap<>();
+		samples.forEach(sample -> {
+			Map<String, Integer> mapClass = statistics.get(sample.getLabel());
+			if (mapClass == null) {
+				mapClass = new HashMap<>();
+				statistics.put(sample.getLabel(), mapClass);
+			}
+			
+			Integer count = mapClass.get(sample.getOriginalLabel());
+			if (count == null) {
+				count = 0;
+			}
+			count++;
+			mapClass.put(sample.getOriginalLabel(), count);
+			
+		});
+		
+		statistics.forEach((clusterLabel, itens) -> {
+			System.out.println("---------------");
+			itens.forEach((name, count) -> {
+				System.out.println(clusterLabel + "=" + name + ":" + count);
+			});
+		});
 
 	}
 
@@ -139,6 +186,52 @@ public class KMeans {
 		
 	}
 
+	private static List<Sample> loadData(String filename, boolean hasHeader, 
+			int labelColumnIndex, String separator) throws Exception {
+		
+		//label,x1,x2,xn
+		//1,x,xx
+		//2,x2,xx2
+		//3,x30,xx25
+		
+		//x,xx,1
+		//x2,xx,2
+		//x30,xx25,3
+		//
+		//
+		
+		List<Sample> result = new ArrayList<>();
+		Scanner scan = new Scanner(new File(filename));
+		
+		if (hasHeader) {
+			scan.nextLine(); // Descarta a linha do cabeçalho do arquivo.
+		}
+		
+		// Itera por todas as linhas do arquivo.
+		while (scan.hasNextLine()) {
+			String line = scan.nextLine();
+			if (!line.isBlank()) { // Descarta linhas em branco
+				String[] dataStr = line.split(separator); // Separa em um array cada valor da linha, ou seja, cada coluna em uma posição do array.
+				Sample sample = new Sample(); // Cria um objeto de amostra novo.
+				double[] data = new double[dataStr.length - 1]; // Prepara o array para receber as variáveis x1, x2, xn.
+				int j = 0; // Controle próprio para o array de vars x1,x2,xn.
+				for (int i = 0; i < dataStr.length; i++) { // Itera pelas colunas da linha, separando o que é label do que é variável x1, x2. xn.
+					if (i == labelColumnIndex) { // Indica que está "olhando" para a coluna do label.
+						sample.setOriginalLabel(dataStr[i]);
+					} else { // Está olhando uma coluna x1,x2,xn.
+						data[j] = Double.parseDouble(dataStr[i]); // Como é um arquivo texto, mesmo que é um número no arquivo, deve ser convertido de string para double.
+						j++;
+					}
+				}
+				sample.setData(data);
+				result.add(sample);
+			} //if
+		} // while
+		
+		return result;
+		
+	}
+	
 	private static List<Sample> loadData() {
 		List<Sample> result = new ArrayList<>();
 		
