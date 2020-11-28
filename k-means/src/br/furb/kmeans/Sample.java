@@ -6,15 +6,23 @@ public class Sample {
 
 	private double[] data;
 	private String label;
+	private String originalLabel;
+	private int sumDataTimes;
 	
 	public Sample buildClone() {
 		Sample clone = new Sample();
 		clone.label = label;
+		clone.originalLabel = originalLabel;
 		
 		clone.data = new double[data.length];
 		System.arraycopy(data, 0, clone.data, 0, data.length);
 		
 		return clone;
+	}
+	
+	public void restData() {
+		data = new double[data.length];
+		sumDataTimes = 0;
 	}
 	
 	public double[] getData() {
@@ -33,18 +41,6 @@ public class Sample {
 		this.label = label;
 		return this;
 	}
-	
-	
-	@Override
-	public String toString() {
-		StringBuilder builder = new StringBuilder();
-		builder.append("Sample [data=");
-		builder.append(Arrays.toString(data));
-		builder.append(", label=");
-		builder.append(label);
-		builder.append("]");
-		return builder.toString();
-	}
 
 	public double getDistance(Sample other) {
 		// Cálculo da distância Euclidiana
@@ -58,6 +54,43 @@ public class Sample {
 		}
 		
 		return Math.sqrt(result);
+	}
+
+	public void sumData(double[] moreData) {
+		for (int i = 0; i < moreData.length; i++) {
+			data[i] += moreData[i];
+		}
+		
+		sumDataTimes++;
+	}
+	
+	public void applyDataMean() {
+		for (int  i = 0; i < data.length; i++) {
+			data[i] /= sumDataTimes;
+		}
+	}
+
+	public String getOriginalLabel() {
+		return originalLabel;
+	}
+
+	public void setOriginalLabel(String originalLabel) {
+		this.originalLabel = originalLabel;
+	}
+
+	@Override
+	public String toString() {
+		StringBuilder builder = new StringBuilder();
+		builder.append("Sample [data=");
+		builder.append(Arrays.toString(data));
+		builder.append(", label=");
+		builder.append(label);
+		builder.append(", originalLabel=");
+		builder.append(originalLabel);
+		builder.append(", sumDataTimes=");
+		builder.append(sumDataTimes);
+		builder.append("]");
+		return builder.toString();
 	}
 	
 	

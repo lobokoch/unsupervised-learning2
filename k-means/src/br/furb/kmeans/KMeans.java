@@ -3,6 +3,7 @@ package br.furb.kmeans;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -13,8 +14,8 @@ public class KMeans {
 		
 		// Carregar as amostras ou objetos.
 		List<Sample> samples = loadData();
-		
 		//samples.forEach(System.out::println);
+		
 		
 		int k = 3; // C1, C2, C3
 		// Lista para os k centroids
@@ -28,6 +29,7 @@ public class KMeans {
 		// C1, C2, C3
 		// Que cada amostra esteja associada a um label (classe) de um centroide.
 		
+		samples.forEach(System.out::println);
 		centroids.forEach(System.out::println);
 
 	}
@@ -55,12 +57,49 @@ public class KMeans {
 				.map(Sample::buildClone)
 				.collect(Collectors.toList());
 				
-				
+		// Recalcula as variáveis dos centroides com base nas amostras de label igual ao centroide.
 		recalcCentroids(samples, centroids);
+		
+		// Em caso dos centroides estabilizarem, para o algoritmo, caso contrário, chama a rotina recursivamente até estabilizar.
 		if (hasChanges(previusCentroids, centroids)) {
 			kmeans(samples, centroids);
 		}
 		
+	}
+
+	private static boolean hasChanges(List<Sample> previusCentroids, List<Sample> centroids) {
+		int index = 0;
+		// Inicia pegando a distância do primeiro centroide anterior e do primeiro atual.
+		double dist = previusCentroids.get(index).getDistance(centroids.get(index));
+		index++; // preprara para acessar o próximo item da lista, caso tenha um.
+		// Na primeira ocorreência de uma distancia maior do que zero, já aborta e retorna true (tem mudanças)
+		while (dist == 0 && index < centroids.size()) {
+			dist = previusCentroids.get(index).getDistance(centroids.get(index));
+			index++;
+		}
+		return dist != 0; // Retorna true em caso de haver alguma distância entre centroides, maior que zero, e false caso contrário.
+	}
+
+	private static void recalcCentroids(List<Sample> samples, List<Sample> centroids) {
+		// "1"=Sample[C1:x1=1, x2=5]
+		// "2"=Sample[C1]
+		
+		// Cria-se um mapa para guardar os centroids de forma indexada.
+		Map<String, Sample> centroidsIndexed = centroids
+				.stream()
+				.peek(Sample::restData) // Reseta os valores do centroide para o recálculo
+				.collect(Collectors.toMap(Sample::getLabel, c -> c));
+		
+		// Para cada amostra, somamos suas variáveis ao centroide correspondente.
+		samples.forEach(sample -> {
+			Sample centroid = centroidsIndexed.get(sample.getLabel());
+			centroid.sumData(sample.getData());
+		});
+		
+		// Dividimos o somatório de cada variável do centróide
+		// pela quantidade de amostra que geraram esse somatório
+		// produzindo assim a média do centroide.
+		centroids.forEach(Sample::applyDataMean);
 	}
 
 	private static void computeNearestCentroid(Sample sample, List<Sample> centroids) {
@@ -109,7 +148,7 @@ public class KMeans {
 			double[] data_i = data[i];
 			Sample sample = new Sample();
 			sample.setData(data_i);
-			sample.setLabel(Integer.toString(i + 1));
+			sample.setOriginalLabel(Integer.toString(i + 1));
 			result.add(sample);
 		}
 		
