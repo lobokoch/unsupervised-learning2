@@ -31,8 +31,11 @@ public class KMeans {
 		List<Sample> samples = loadData(filename, hasHeader, labelColumnIndex, separator);
 		//samples.forEach(System.out::println);
 		
+		// Armazenará os valores de silhoeta de cada k, para poder obter o melhor k.
+		// O mlehor k, será o que tiver o maior valor de silhoeta.
+		Map<Integer, Double> coefficients = new HashMap<>();
 		
-		int k = 2; // C1, C2, C3
+		int k = 9; // C1, C2, C3
 		// Lista para os k centroids
 		List<Sample> centroids = new ArrayList<>();
 		
@@ -78,7 +81,134 @@ public class KMeans {
 				System.out.println(clusterLabel + "=" + name + ":" + count);
 			});
 		});
+		
+		calcSilhouette(samples, centroids, coefficients);
+		System.out.format("%nSilhueta para k=%d%n", k);
+		showSilhouette(samples, centroids);
 
+	}
+
+	private static void showSilhouette(List<Sample> samples, List<Sample> centroids) {
+		// -1   0   +1
+		//      |22222 (0.5)
+		//      |22222222 0.8
+		//      |22222222 0.8
+		//   222| -0.3
+		
+		centroids.forEach(centroid -> {
+			
+			List<Sample> objects = samples.stream()
+					.filter(it -> it.getLabel().equals(centroid.getLabel()))
+					.collect(Collectors.toList());
+			
+			objects.forEach(sample -> {
+				int factor = 100;
+				int si = (int) Math.round((sample.getSilhouette() * factor));
+				
+				if (sample.getSilhouette() >= 0) { // si positivo
+					for (int i = 0; i < factor; i++) {
+						System.out.print(i == factor - 1 ? "|" : " ");
+					}
+				} else { // si negativo
+					si = si * -1;
+					int max = factor - si;
+					for (int i = 0; i < max - 1; i++) {
+						System.out.print(" ");
+					}
+				}
+				
+				// A cor da barra é o label do centroid
+				for (int i = 0; i < si; i++) {
+					System.out.print(centroid.getLabel());
+				}
+				
+				if (sample.getSilhouette() < 0) {
+					System.out.print("|");
+				}
+				
+				System.out.printf(" (%.2f)", sample.getSilhouette());
+				System.out.println(" "); // Imprimi uma quebra de linha.
+				
+			});
+			
+			System.out.println(" "); // Imprimi um espaço entre cada cluster.
+			
+		});
+		
+	}
+
+	private static void calcSilhouette(List<Sample> samples, 
+			List<Sample> centroids,
+			Map<Integer, Double> coefficients) {
+		
+		// 1) Calcular ai dentro do Ci.
+		// 2) Calcular bi do vizimho mais próximo.
+		
+		Map<String, Sample> indexedCentroids = centroids
+				.stream()
+				.collect(Collectors.toMap(Sample::getLabel, c -> c));
+				
+		samples.forEach(sample -> {
+			
+			Sample myCluster = indexedCentroids.get(sample.getLabel());
+			
+			// Passo 1.
+			double ai = calcMedia(sample, samples, myCluster);
+			
+			List<Sample> neigborCentroids = new ArrayList<>(centroids);
+			neigborCentroids.remove(myCluster);
+			
+			// Passo 2.
+			// Obtém a menor média entre "sample" e as "sample" dos demais clusters.
+			double[] bi_min = new double[1];
+			bi_min[0] = Double.MAX_VALUE;
+			neigborCentroids.forEach(Ck -> {
+				double bi = calcMedia(sample, samples, Ck);
+				if (bi < bi_min[0]) {
+					bi_min[0] = bi;
+				}
+			});
+			
+			// Conta a quantidade de "sample" em "samples" do cluster Ci, o cluster em questão.
+			long CiSize = samples.stream()
+					.filter(it -> it.getLabel().equals(myCluster.getLabel()))
+					.count();
+			
+			// Calcula efetivamente si.
+			double si = CiSize > 1 
+					? (bi_min[0] - ai) / Math.max(ai, bi_min[0])
+					: 0;
+					
+			sample.setSilhouette(si);
+			
+			// Somando todos os valores de silhueta por cluster (k) para depois calcular o melhor k.
+			int k = centroids.size();
+			coefficients.put(k, coefficients.getOrDefault(k, 0.0) + si);
+			
+		});
+		
+	}
+
+	private static double calcMedia(Sample sample, 
+			List<Sample> samples, 
+			Sample cluster) {
+		
+		// Obtém todas as amostras do universo X (samples), cujo label for igual
+		// ao label do cluster passado.
+		List<Sample> myFriends = samples.stream()
+				.filter(it -> it.getLabel().equals(cluster.getLabel()) && it != sample)
+				.collect(Collectors.toList());
+		
+		// Somando as distâncias da amostra passada, o "ai" no caso, com as demais amostras
+		// do cluster passado como parâmetro.
+		double[] distanceSum = new double[1];
+		myFriends.forEach(friend -> {
+			distanceSum[0] += sample.getDistance(friend);
+		});
+		
+		// Calcula a média efetivamente, dividindo o somatório, pela quantidade de amostras
+		// do cluster passado.
+		return distanceSum[0] / myFriends.size();
 	}
 
 	private static void kmeans(List<Sample> samples, int k, List<Sample> centroids) {

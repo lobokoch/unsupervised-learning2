@@ -8,6 +8,7 @@ public class Sample {
 	private String label;
 	private String originalLabel;
 	private int sumDataTimes;
+	private double silhouette;
 	
 	public Sample buildClone() {
 		Sample clone = new Sample();
@@ -78,6 +79,15 @@ public class Sample {
 		this.originalLabel = originalLabel;
 	}
 
+
+	public double getSilhouette() {
+		return silhouette;
+	}
+
+	public void setSilhouette(double silhouette) {
+		this.silhouette = silhouette;
+	}
+
 	@Override
 	public String toString() {
 		StringBuilder builder = new StringBuilder();
@@ -89,9 +99,12 @@ public class Sample {
 		builder.append(originalLabel);
 		builder.append(", sumDataTimes=");
 		builder.append(sumDataTimes);
+		builder.append(", silhouette=");
+		builder.append(silhouette);
 		builder.append("]");
 		return builder.toString();
 	}
+	
 	
 	
 }
