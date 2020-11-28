@@ -16,75 +16,96 @@ public class KMeans {
 	public static void main(String[] args) throws Exception {
 		
 		// Carregar as amostras ou objetos.
-		//List<Sample> samples = loadData();
+		List<Sample> samples = loadData();
 		
 //		String filename = "D:\\git\\furb\\aprendizado-nao-supervisionado\\dataset\\DataHotDogs.csv";
 //		boolean hasHeader = true; 
 //		int labelColumnIndex = 0;
 //		String separator = ",";
 		
-		String filename = "D:\\git\\furb\\aprendizado-nao-supervisionado\\dataset\\iris.data";
+		/*String filename = "D:\\git\\furb\\aprendizado-nao-supervisionado\\dataset\\iris.data";
 		boolean hasHeader = false; 
 		int labelColumnIndex = 4;
-		String separator = ",";
+		String separator = ",";*/
 		
-		List<Sample> samples = loadData(filename, hasHeader, labelColumnIndex, separator);
+		//List<Sample> samples = loadData(filename, hasHeader, labelColumnIndex, separator);
 		//samples.forEach(System.out::println);
 		
 		// Armazenará os valores de silhoeta de cada k, para poder obter o melhor k.
 		// O mlehor k, será o que tiver o maior valor de silhoeta.
 		Map<Integer, Double> coefficients = new HashMap<>();
 		
-		int k = 9; // C1, C2, C3
-		// Lista para os k centroids
-		List<Sample> centroids = new ArrayList<>();
 		
-		//centroids.add(samples.get(0).buildClone().setLabel(Integer.toString(centroids.size() + 1)));
-		//centroids.add(samples.get(2).buildClone().setLabel(Integer.toString(centroids.size() + 1)));
 		
-		// Calcula o k-means efetivamente
-		kmeans(samples, k, centroids);
-		// C1, C2, C3
-		// Que cada amostra esteja associada a um label (classe) de um centroide.
-		
-		samples.forEach(System.out::println);
-		System.out.println("----------------");
-		centroids.forEach(System.out::println);
-		
-		//1=Iris-setosa:10
-		//1=Iris-versicolor:5
-		//1=Iris-virginica:3
-		
-		//2=Iris-setosa:0
-		//2=Iris-versicolor:10
-		//2=Iris-virginica:0
-		Map<String, Map<String, Integer>> statistics = new HashMap<>();
-		samples.forEach(sample -> {
-			Map<String, Integer> mapClass = statistics.get(sample.getLabel());
-			if (mapClass == null) {
-				mapClass = new HashMap<>();
-				statistics.put(sample.getLabel(), mapClass);
-			}
+		for (int k = 2; k < 5; k++) {
+			//int k = 9; // C1, C2, C3
+			// Lista para os k centroids
+			List<Sample> centroids = new ArrayList<>();
 			
-			Integer count = mapClass.get(sample.getOriginalLabel());
-			if (count == null) {
-				count = 0;
-			}
-			count++;
-			mapClass.put(sample.getOriginalLabel(), count);
+			//centroids.add(samples.get(0).buildClone().setLabel(Integer.toString(centroids.size() + 1)));
+			//centroids.add(samples.get(2).buildClone().setLabel(Integer.toString(centroids.size() + 1)));
 			
-		});
-		
-		statistics.forEach((clusterLabel, itens) -> {
-			System.out.println("---------------");
-			itens.forEach((name, count) -> {
-				System.out.println(clusterLabel + "=" + name + ":" + count);
+			// Calcula o k-means efetivamente
+			kmeans(samples, k, centroids);
+			// C1, C2, C3
+			// Que cada amostra esteja associada a um label (classe) de um centroide.
+			
+//			samples.forEach(System.out::println);
+//			System.out.println("----------------");
+//			centroids.forEach(System.out::println);
+			
+			//1=Iris-setosa:10
+			//1=Iris-versicolor:5
+			//1=Iris-virginica:3
+			
+			//2=Iris-setosa:0
+			//2=Iris-versicolor:10
+			//2=Iris-virginica:0
+			Map<String, Map<String, Integer>> statistics = new HashMap<>();
+			samples.forEach(sample -> {
+				Map<String, Integer> mapClass = statistics.get(sample.getLabel());
+				if (mapClass == null) {
+					mapClass = new HashMap<>();
+					statistics.put(sample.getLabel(), mapClass);
+				}
+				
+				Integer count = mapClass.get(sample.getOriginalLabel());
+				if (count == null) {
+					count = 0;
+				}
+				count++;
+				mapClass.put(sample.getOriginalLabel(), count);
+				
 			});
+			
+			statistics.forEach((clusterLabel, itens) -> {
+				System.out.println("---------------");
+				itens.forEach((name, count) -> {
+					System.out.println(clusterLabel + "=" + name + ":" + count);
+				});
+			});
+			
+			calcSilhouette(samples, centroids, coefficients);
+			System.out.format("%nSilhueta para k=%d%n", k);
+			showSilhouette(samples, centroids);
+		}// fecha o for
+		
+		// Calcular o melhor k.
+		int[] bestK = new int[1];
+		bestK[0] = -1;
+		
+		double[] bestScore = new double[1];
+		bestScore[0] = Double.MIN_VALUE;
+				
+		coefficients.forEach((x_k, sum) -> {
+			double mean = sum / samples.size();
+			if (mean > bestScore[0]) {
+				bestScore[0] = mean;
+				bestK[0] = x_k;
+			}
 		});
 		
-		calcSilhouette(samples, centroids, coefficients);
-		System.out.format("%nSilhueta para k=%d%n", k);
-		showSilhouette(samples, centroids);
+		System.out.format("%nBest k:%d, with mean:%.2f%n", bestK[0], bestScore[0]);
 
 	}
 
