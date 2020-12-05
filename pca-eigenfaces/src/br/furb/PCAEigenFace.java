@@ -88,7 +88,7 @@ public class PCAEigenFace {
 		eigenvectors = new Mat();
 		Core.eigen(covariance, eigenvalues, eigenvectors);
 		
-		printEigenValues();		
+		//printEigenValues();		
 	}
 	
 	private void printEigenValues() {
