@@ -38,7 +38,7 @@ public class PCA {
 		
 		// Teste
 		
-		PCAEigenFace model = new PCAEigenFace(10);
+		PCAEigenFace model = new PCAEigenFace(15);
 		model.train(train);
 		
 		int corrects = 0;

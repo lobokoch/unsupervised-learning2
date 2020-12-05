@@ -86,7 +86,26 @@ public class PCAEigenFace {
 	private void calcEigen() {
 		eigenvalues = new Mat();
 		eigenvectors = new Mat();
-		Core.eigen(covariance, eigenvalues, eigenvectors);		
+		Core.eigen(covariance, eigenvalues, eigenvectors);
+		
+		printEigenValues();		
+	}
+	
+	private void printEigenValues() {
+		// Soma os eigenvalues
+		double sum = 0;
+		for (int i = 0; i < eigenvalues.rows(); i++) {
+			sum += eigenvalues.get(i, 0)[0];
+		}
+		
+		// Calcula o percentual de contribuição de cada eigenvalue na explicação dos dados.
+		double acumulado = 0;
+		for (int i = 0; i < eigenvalues.rows(); i++) {
+			double v = eigenvalues.get(i, 0)[0];
+			double percentual = v / sum * 100;
+			acumulado += percentual;
+			System.out.format("CP%d, percentual: %.2f (%.2f)%n", (i + 1), percentual, acumulado);
+		}
 	}
 
 	// Calcula a matriz de covariancia.
