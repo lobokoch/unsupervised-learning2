@@ -34,6 +34,13 @@ public class PCA {
 		/*System.out.println("Treino:" + train.size());
 		System.out.println("Teste:" + test.size());*/
 		
+		// Treino
+		
+		// Teste
+		
+		PCAEigenFace model = new PCAEigenFace(10);
+		model.train(train);
+		
 		
 
 	}
