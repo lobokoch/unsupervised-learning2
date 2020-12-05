@@ -41,7 +41,23 @@ public class PCA {
 		PCAEigenFace model = new PCAEigenFace(10);
 		model.train(train);
 		
+		int corrects = 0;
+		for (Person personTest: test) {
+			Mat testData = personTest.getData();
+			int[] label = new int[1];
+			double[] confidence = new double[1];
+			double[] reconstructionError = new double[1];
+			
+			model.predict(testData, label, confidence, reconstructionError);
+			
+			if (label[0] == personTest.getLabel()) {
+				corrects++;
+			}
+			
+		}
 		
+		double x = corrects / (double) test.size() * 100;
+		System.out.println("Taxa de acerto:" + x);
 
 	}
 
